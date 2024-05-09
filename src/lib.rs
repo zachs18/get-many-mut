@@ -13,7 +13,10 @@ use core::{fmt, mem};
 ///
 /// This will do `binomial(N + 1, 2) = N * (N + 1) / 2 = 0, 1, 3, 6, 10, ..`
 /// comparison operations.
-fn get_many_check_valid<const N: usize>(indices: &[usize; N], len: usize) -> bool {
+fn get_many_check_valid<const N: usize>(
+    indices: &[usize; N],
+    len: usize,
+) -> bool {
     // NB: The optimizer should inline the loops into a sequence
     // of instructions without additional branching.
     let mut valid = true;
@@ -52,15 +55,20 @@ pub unsafe trait GetManyMutExt {
     /// let v = &mut [1, 2, 3];
     /// v.get_many_mut([0, 2, 0]).unwrap();
     /// ```
-    fn get_many_mut<const N: usize>(&mut self, indices: [usize; N]) -> Result<[&mut Self::Element; N], GetManyMutError<N>>;
-    /// Returns mutable references to many indices at once, without doing any checks.
+    fn get_many_mut<const N: usize>(
+        &mut self,
+        indices: [usize; N],
+    ) -> Result<[&mut Self::Element; N], GetManyMutError<N>>;
+    /// Returns mutable references to many indices at once, without doing any
+    /// checks.
     ///
     /// For a safe alternative see [`get_many_mut`].
     ///
     /// # Safety
     ///
-    /// Calling this method with overlapping or out-of-bounds indices is *[undefined behavior]*
-    /// even if the resulting references are not used.
+    /// Calling this method with overlapping or out-of-bounds indices is
+    /// *[undefined behavior]* even if the resulting references are not
+    /// used.
     ///
     /// # Examples
     ///
@@ -79,19 +87,32 @@ pub unsafe trait GetManyMutExt {
     ///
     /// [`get_many_mut`]: GetManyMutExt::get_many_mut
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
-    unsafe fn get_many_unchecked_mut<const N: usize>(&mut self, indices: [usize; N]) -> [&mut Self::Element; N];
+    unsafe fn get_many_unchecked_mut<const N: usize>(
+        &mut self,
+        indices: [usize; N],
+    ) -> [&mut Self::Element; N];
 }
 
 unsafe impl<T> GetManyMutExt for [T] {
     type Element = T;
-    fn get_many_mut<const N: usize>(&mut self, indices: [usize; N]) -> Result<[&mut Self::Element; N], GetManyMutError<N>> {
+    fn get_many_mut<const N: usize>(
+        &mut self,
+        indices: [usize; N],
+    ) -> Result<[&mut Self::Element; N], GetManyMutError<N>> {
         if get_many_check_valid(&indices, self.len()) {
-            unsafe { Ok(<Self as GetManyMutExt>::get_many_unchecked_mut(self, indices)) }
+            unsafe {
+                Ok(<Self as GetManyMutExt>::get_many_unchecked_mut(
+                    self, indices,
+                ))
+            }
         } else {
             Err(GetManyMutError)
         }
     }
-    unsafe fn get_many_unchecked_mut<const N: usize>(&mut self, indices: [usize; N]) -> [&mut T; N] {
+    unsafe fn get_many_unchecked_mut<const N: usize>(
+        &mut self,
+        indices: [usize; N],
+    ) -> [&mut T; N] {
         // NB: This implementation is written as it is because any variation of
         // `indices.map(|i| self.get_unchecked_mut(i))` would make miri unhappy,
         // or generate worse code otherwise. This is also why we need to go
@@ -114,15 +135,22 @@ unsafe impl<T> GetManyMutExt for [T] {
 
 unsafe impl<T, const M: usize> GetManyMutExt for [T; M] {
     type Element = T;
-    fn get_many_mut<const N: usize>(&mut self, indices: [usize; N]) -> Result<[&mut Self::Element; N], GetManyMutError<N>> {
+    fn get_many_mut<const N: usize>(
+        &mut self,
+        indices: [usize; N],
+    ) -> Result<[&mut Self::Element; N], GetManyMutError<N>> {
         <[T] as GetManyMutExt>::get_many_mut(self, indices)
     }
-    unsafe fn get_many_unchecked_mut<const N: usize>(&mut self, indices: [usize; N]) -> [&mut T; N] {
+    unsafe fn get_many_unchecked_mut<const N: usize>(
+        &mut self,
+        indices: [usize; N],
+    ) -> [&mut T; N] {
         unsafe { <[T] as GetManyMutExt>::get_many_unchecked_mut(self, indices) }
     }
 }
 
-/// The error type returned by [`get_many_mut<N>`][`GetManyMutExt::get_many_mut`].
+/// The error type returned by
+/// [`get_many_mut<N>`][`GetManyMutExt::get_many_mut`].
 ///
 /// It indicates one of two possible errors:
 /// - An index is out-of-bounds.
@@ -150,7 +178,10 @@ impl<const N: usize> fmt::Debug for GetManyMutError<N> {
 
 impl<const N: usize> fmt::Display for GetManyMutError<N> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt("an index is out of bounds or appeared multiple times in the array", f)
+        fmt::Display::fmt(
+            "an index is out of bounds or appeared multiple times in the array",
+            f,
+        )
     }
 }
 
