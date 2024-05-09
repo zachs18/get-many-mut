@@ -1,0 +1,17 @@
+[package]
+name = "get-many-mut"
+version = "0.1.0"
+edition = "2021"
+authors = ["Zachary S"]
+description = "Stable polyfill for slice::get_many_mut"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+categories = ["slice", "data-structures"]
+keywords = ["slice"]
+repository = "https://github.com/zachs18/get-many-mut"
+rust-version = "1.56"
+
+[features]
+default = ["std"]
+alloc = []
+std = ["alloc"]
